@@ -1,18 +1,30 @@
-// app.js
+const express = require("express");
+const app = express();
+const port = 3000;
 
-// Import the built-in 'http' module
-const http = require('http');
+// **NEW** student list
+const students = [
+  { id:  1, name: "Anna",    course: "Computer Science" },
+  { id:  2, name: "Susi",    course: "Mathematics" },
+  { id:  3, name: "Fritz",   course: "English" },
+  { id:  4, name: "Andrea",  course: "Mathematics" },
+  { id:  5, name: "Thomas",  course: "German" },
+  { id:  6, name: "Verena",  course: "Mathematics" },
+  { id:  7, name: "Marion",  course: "Mathematics" },
+  { id:  8, name: "Karl",    course: "Computer Science" },
+  { id:  9, name: "Hans",    course: "Mathematics" },
+  { id: 10, name: "Barbara", course: "Computer Science" }
+];
 
-// Create a simple HTTP server
-const server = http.createServer((req, res) => {
-  // Set the response header
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-
-  // Send the response text
-  res.end('Hello World\n');
+app.get("/", (req, res) => {
+  res.send("Hello, World from Express!");
 });
 
-// The server will listen on port 3000
-server.listen(3000, () => {
-  console.log('Server is running at http://localhost:3000');
+// **NEW** route: /students
+app.get("/students", (req, res) => {
+  res.json(students);
+});
+
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });
