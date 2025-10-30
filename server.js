@@ -48,7 +48,6 @@ app.post("/students", (req, res) => {
   res.status(201).json(newStudent);
 });
 
-// **NEW** replaces the student's data
 app.put("/students/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const { name, course } = req.body;
@@ -57,15 +56,28 @@ app.put("/students/:id", (req, res) => {
     return res.status(400).json({ error: "Name and course are required!" });
   }
 
-  // Returns the index of the student with the id.
   const pos = students.findIndex(s => s.id === id);
   if (pos === -1) {
     return res.status(404).json({ error: "Student not found" });
   }
-
-  // update an existing student; replace the object
   students[pos] = { id, name, course };
   res.json(students[pos]);
+});
+
+// **NEW** Partially update a Student
+app.patch("/students/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const { name, course } = req.body;
+
+  const student = students.find(s => s.id === id);
+  if (!student) {
+    return res.status(404).json({ error: "Student not found" });
+  }
+
+  if (name !== undefined) student.name = name;
+  if (course !== undefined) student.course = course;
+
+  res.json(student);
 });
 
 app.listen(port, () => {
