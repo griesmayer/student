@@ -49,3 +49,29 @@ th, td {
 tr:hover {
   background: #f9fbff;
 }
+
+.input-section {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+#student-input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+#add-btn {
+  padding: 8px 16px;
+  background: #0078ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+#add-btn:hover {
+  background: #005fcc;
+}
