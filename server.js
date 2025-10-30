@@ -1,6 +1,5 @@
 const express = require("express");
 const app = express();
-// **NEW** activate Body-Parser
 app.use(express.json());
 const port = process.env.PORT || 3000;
 
@@ -36,26 +35,37 @@ app.get("/students/:id", (req, res) => {
   res.json(student);
 });
 
-// **NEW** add 1 Student
 app.post("/students", (req, res) => {
   const { name, course } = req.body;
 
-  // check if the JSON includes name and course 
   if (!name || !course) {
     return res.status(400).json({ error: "Name and course are required!" });
   }
 
-  // Create a new ID (simple add 1 to the last ID in the array)
   const newId = students.length ? students[students.length - 1].id + 1 : 1;
-
-  // Create a new Student
   const newStudent = { id: newId, name, course };
-  
-  // Add the new Student to the array
   students.push(newStudent);
-
-  // Returns OK and the newStudent as a JSON Object
   res.status(201).json(newStudent);
+});
+
+// **NEW** replaces the student's data
+app.put("/students/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const { name, course } = req.body;
+
+  if (!name || !course) {
+    return res.status(400).json({ error: "Name and course are required!" });
+  }
+
+  // Returns the index of the student with the id.
+  const pos = students.findIndex(s => s.id === id);
+  if (pos === -1) {
+    return res.status(404).json({ error: "Student not found" });
+  }
+
+  // update an existing student; replace the object
+  students[pos] = { id, name, course };
+  res.json(students[pos]);
 });
 
 app.listen(port, () => {
