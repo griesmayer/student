@@ -29,7 +29,16 @@ async function fetchStudents() {
       const tdCourse = document.createElement("td");
       tdCourse.textContent = s.course;
 
-      tr.append(tdId, tdName, tdCourse);
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "Delete";
+      delBtn.className = "delete-btn";
+      delBtn.onclick = async () => {
+          if (!confirm(`Remove student ${s.name}?`)) return;
+          await deleteStudent(s.id);
+          await fetchStudents();
+        };
+
+      tr.append(tdId, tdName, tdCourse, delBtn);
       tbody.appendChild(tr);
     }
 
@@ -54,6 +63,21 @@ async function addStudent(name, course) {
   } catch (err) {
     console.error(err);
     statusEl.textContent = `Error while added a student: ${err.message}`;
+  }
+}
+
+async function deleteStudent(id) {
+  const statusEl = document.getElementById("status");
+  try {
+    const res = await fetch(`/students/${id}`, { method: "DELETE" });
+    if (res.status === 204) {
+      statusEl.textContent = `Student ${id} removed.`;
+    } else {
+      throw new Error(msg.error || `HTTP ${res.status}`);
+    }
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = `Error while removing: ${err.message}`;
   }
 }
 
