@@ -2,6 +2,10 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 const port = process.env.PORT || 3000;
+// **NEW** add the path module
+const path = require("path");
+// **NEW** use the public/index.htlm file
+app.use(express.static(path.join(__dirname, "public")));
 
 const students = [
   { id:  1, name: "Anna",    course: "Computer Science" },
@@ -79,7 +83,6 @@ app.patch("/students/:id", (req, res) => {
   res.json(student);
 });
 
-// **NEW** removes one student
 app.delete("/students/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const pos = students.findIndex(s => s.id === id);
@@ -88,9 +91,7 @@ app.delete("/students/:id", (req, res) => {
     return res.status(404).json({ error: "Student not found" });
   }
 
-  // Removes the student at the pos position
   students.splice(pos, 1);
-  // No content is returned 
   return res.status(204).send(); // No Content
 });
 
