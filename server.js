@@ -82,7 +82,7 @@ app.patch("/students/:id", (req, res) => {
 // **NEW** removes one student
 app.delete("/students/:id", (req, res) => {
   const id = parseInt(req.params.id);
-  const idx = students.findIndex(s => s.id === id);
+  const pos = students.findIndex(s => s.id === id);
 
   if (pos === -1) {
     return res.status(404).json({ error: "Student not found" });
@@ -90,7 +90,7 @@ app.delete("/students/:id", (req, res) => {
 
   // Removes the student at the pos position
   students.splice(pos, 1);
-  // No content is returned
+  // No content is returned 
   return res.status(204).send(); // No Content
 });
 
