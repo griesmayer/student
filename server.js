@@ -64,7 +64,6 @@ app.put("/students/:id", (req, res) => {
   res.json(students[pos]);
 });
 
-// **NEW** Partially update a Student
 app.patch("/students/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const { name, course } = req.body;
@@ -78,6 +77,21 @@ app.patch("/students/:id", (req, res) => {
   if (course !== undefined) student.course = course;
 
   res.json(student);
+});
+
+// **NEW** removes one student
+app.delete("/students/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const idx = students.findIndex(s => s.id === id);
+
+  if (pos === -1) {
+    return res.status(404).json({ error: "Student not found" });
+  }
+
+  // Removes the student at the pos position
+  students.splice(pos, 1);
+  // No content is returned
+  return res.status(204).send(); // No Content
 });
 
 app.listen(port, () => {
