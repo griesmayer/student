@@ -1,8 +1,9 @@
 const express = require("express");
 const app = express();
-const port = 3000;
+// **NEW** activate Body-Parser
+app.use(express.json());
+const port = process.env.PORT || 3000;
 
-// **NEW** student list
 const students = [
   { id:  1, name: "Anna",    course: "Computer Science" },
   { id:  2, name: "Susi",    course: "Mathematics" },
@@ -20,9 +21,41 @@ app.get("/", (req, res) => {
   res.send("Hello, World from Express!");
 });
 
-// **NEW** route: /students
 app.get("/students", (req, res) => {
   res.json(students);
+});
+
+app.get("/students/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const student = students.find(s => s.id === id);
+
+  if (!student) {
+    return res.status(404).json({ error: "Student not found" });
+  }
+
+  res.json(student);
+});
+
+// **NEW** add 1 Student
+app.post("/students", (req, res) => {
+  const { name, course } = req.body;
+
+  // check if the JSON includes name and course 
+  if (!name || !course) {
+    return res.status(400).json({ error: "Name and course are required!" });
+  }
+
+  // Create a new ID (simple add 1 to the last ID in the array)
+  const newId = students.length ? students[students.length - 1].id + 1 : 1;
+
+  // Create a new Student
+  const newStudent = { id: newId, name, course };
+  
+  // Add the new Student to the array
+  students.push(newStudent);
+
+  // Returns OK and the newStudent as a JSON Object
+  res.status(201).json(newStudent);
 });
 
 app.listen(port, () => {
