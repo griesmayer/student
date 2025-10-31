@@ -1,22 +1,16 @@
+let editingId = null;
+
 async function fetchStudents() {
   const statusEl = document.getElementById("status");
   const tbody = document.querySelector("#students-table tbody");
 
   try {
-    // Set the status
-    statusEl.textContent = "Load data...";
-
-    // Use the route to get the data
+    statusEl.textContent = "Lade Daten…";
     const res = await fetch("/students");
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    // Get an array of students
     const students = await res.json();
 
-    // Clear the table
     tbody.innerHTML = "";
-
-    // Add rows to the table
     for (const s of students) {
       const tr = document.createElement("tr");
 
@@ -24,28 +18,83 @@ async function fetchStudents() {
       tdId.textContent = s.id;
 
       const tdName = document.createElement("td");
-      tdName.textContent = s.name;
-
       const tdCourse = document.createElement("td");
-      tdCourse.textContent = s.course;
+      const tdActions = document.createElement("td");
 
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "Delete";
-      delBtn.className = "delete-btn";
-      delBtn.onclick = async () => {
-          if (!confirm(`Remove student ${s.name}?`)) return;
+      if (editingId === s.id) {
+        // Edit mode
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.value = s.name;
+        nameInput.className = "input-sm";
+
+        const courseInput = document.createElement("input");
+        courseInput.type = "text";
+        courseInput.value = s.course;
+        courseInput.className = "input-sm";
+
+        tdName.appendChild(nameInput);
+        tdCourse.appendChild(courseInput);
+
+        const saveBtn = document.createElement("button");
+        saveBtn.textContent = "Speichern";
+        saveBtn.className = "save-btn";
+
+        saveBtn.onclick = async () => {
+          if (!nameInput.value.trim() || !courseInput.value.trim()) {
+            document.getElementById("status").textContent = "Name und Kurs erforderlich.";
+            return;
+          }
+          await updateStudent(s.id, {
+            name: nameInput.value.trim(),
+            course: courseInput.value.trim(),
+          });
+          editingId = null;
+          await fetchStudents();
+        };
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "Abbrechen";
+        cancelBtn.className = "cancel-btn";
+        cancelBtn.onclick = async () => {
+          editingId = null;
+          await fetchStudents();
+        };
+
+        tdActions.append(saveBtn, " ", cancelBtn);
+      } else {
+        // View mode
+        tdName.textContent = s.name;
+        tdCourse.textContent = s.course;
+
+        const editBtn = document.createElement("button");
+        editBtn.textContent = "Bearbeiten";
+        editBtn.className = "edit-btn";
+        editBtn.onclick = () => {
+          editingId = s.id;
+          fetchStudents();
+        };
+
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "Löschen";
+        delBtn.className = "delete-btn";
+        delBtn.onclick = async () => {
+          if (!confirm(`Student ${s.name} wirklich löschen?`)) return;
           await deleteStudent(s.id);
           await fetchStudents();
         };
 
-      tr.append(tdId, tdName, tdCourse, delBtn);
+        tdActions.append(editBtn, " ", delBtn);
+      }
+
+      tr.append(tdId, tdName, tdCourse, tdActions);
       tbody.appendChild(tr);
     }
 
-    statusEl.textContent = `Loaded: ${students.length} students`;
+    statusEl.textContent = `Geladen: ${students.length} Studenten`;
   } catch (err) {
     console.error(err);
-    statusEl.textContent = "Error while loading the data.";
+    statusEl.textContent = "Fehler beim Laden der Daten.";
   }
 }
 
@@ -78,6 +127,25 @@ async function deleteStudent(id) {
   } catch (err) {
     console.error(err);
     statusEl.textContent = `Error while removing: ${err.message}`;
+  }
+}
+
+async function updateStudent(id, data) {
+  const statusEl = document.getElementById("status");
+  try {
+    const res = await fetch(`/students/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const msg = await res.json().catch(() => ({}));
+      throw new Error(msg.error || `HTTP ${res.status}`);
+    }
+    statusEl.textContent = `Student ${id} aktualisiert.`;
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = `Fehler beim Aktualisieren: ${err.message}`;
   }
 }
 
