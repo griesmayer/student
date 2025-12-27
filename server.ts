@@ -12,10 +12,6 @@ const port = Deno.env.get("PORT") || 3000;
 const publicDir = fromFileUrl(new URL("./public", import.meta.url));
 app.use(express.static(publicDir));
 
-app.get("/", (_req: Request, res: Response) => {
-  res.send("Hello, World from Express!");
-});
-
 app.get("/students", async (_req: Request, res: Response) => {
   const students = await prisma.student.findMany();
   res.json(students);
@@ -54,7 +50,7 @@ app.post(
 
 app.patch(
   "/students/:id",
-  (
+  async (
     req: Request<{ id: string }, unknown, { name?: string; course?: string }>,
     res: Response,
   ) => {
@@ -64,7 +60,7 @@ app.patch(
     if (!name || !course) {
       return res.status(400).json({ error: "Name and course are required!" });
     }
-    const patchedStudent = prisma.student.update({
+    const patchedStudent = await prisma.student.update({
       where: { id },
       data: { name, course },
     });

@@ -4,12 +4,20 @@ GET http://localhost:3000/students
 GET http://localhost:3000/students/3
 
 ###
-
 POST http://localhost:3000/students
 Content-Type: application/json
 
 {
   "name": "Schluribumbu",
+  "course": "Ruh geben"
+}
+
+###
+PATCH http://localhost:3000/students/1
+Content-Type: application/json
+
+{
+  "name": "Annalisa",
   "course": "Ruh geben"
 }
 
