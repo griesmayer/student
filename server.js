@@ -1,23 +1,25 @@
-const express = require("express");
+import express from "express";
+import { fromFileUrl } from "jsr:@std/path";
 const app = express();
 app.use(express.json());
-const port = process.env.PORT || 3000;
+const port = Deno.env.get("PORT") || 3000;
 // **NEW** add the path module
-const path = require("path");
 // **NEW** use the public/index.htlm file
-app.use(express.static(path.join(__dirname, "public")));
+
+const publicDir = fromFileUrl(new URL("./public", import.meta.url));
+app.use(express.static(publicDir));
 
 const students = [
-  { id:  1, name: "Anna",    course: "Computer Science" },
-  { id:  2, name: "Susi",    course: "Mathematics" },
-  { id:  3, name: "Fritz",   course: "English" },
-  { id:  4, name: "Andrea",  course: "Mathematics" },
-  { id:  5, name: "Thomas",  course: "German" },
-  { id:  6, name: "Verena",  course: "Mathematics" },
-  { id:  7, name: "Marion",  course: "Mathematics" },
-  { id:  8, name: "Karl",    course: "Computer Science" },
-  { id:  9, name: "Hans",    course: "Mathematics" },
-  { id: 10, name: "Barbara", course: "Computer Science" }
+  { id: 1, name: "Anna", course: "Computer Science" },
+  { id: 2, name: "Susi", course: "Mathematics" },
+  { id: 3, name: "Fritz", course: "English" },
+  { id: 4, name: "Andrea", course: "Mathematics" },
+  { id: 5, name: "Thomas", course: "German" },
+  { id: 6, name: "Verena", course: "Mathematics" },
+  { id: 7, name: "Marion", course: "Mathematics" },
+  { id: 8, name: "Karl", course: "Computer Science" },
+  { id: 9, name: "Hans", course: "Mathematics" },
+  { id: 10, name: "Barbara", course: "Computer Science" },
 ];
 
 app.get("/", (req, res) => {
@@ -30,7 +32,7 @@ app.get("/students", (req, res) => {
 
 app.get("/students/:id", (req, res) => {
   const id = parseInt(req.params.id);
-  const student = students.find(s => s.id === id);
+  const student = students.find((s) => s.id === id);
 
   if (!student) {
     return res.status(404).json({ error: "Student not found" });
@@ -60,7 +62,7 @@ app.put("/students/:id", (req, res) => {
     return res.status(400).json({ error: "Name and course are required!" });
   }
 
-  const pos = students.findIndex(s => s.id === id);
+  const pos = students.findIndex((s) => s.id === id);
   if (pos === -1) {
     return res.status(404).json({ error: "Student not found" });
   }
@@ -72,7 +74,7 @@ app.patch("/students/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const { name, course } = req.body;
 
-  const student = students.find(s => s.id === id);
+  const student = students.find((s) => s.id === id);
   if (!student) {
     return res.status(404).json({ error: "Student not found" });
   }
@@ -85,7 +87,7 @@ app.patch("/students/:id", (req, res) => {
 
 app.delete("/students/:id", (req, res) => {
   const id = parseInt(req.params.id);
-  const pos = students.findIndex(s => s.id === id);
+  const pos = students.findIndex((s) => s.id === id);
 
   if (pos === -1) {
     return res.status(404).json({ error: "Student not found" });
