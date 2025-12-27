@@ -1,4 +1,4 @@
-import express from "express";
+import express, { type Request, type Response } from "express";
 import { fromFileUrl } from "@std/path";
 import { PrismaClient } from "./prisma/generatedclient/client.ts";
 const prisma = new PrismaClient();
@@ -12,56 +12,75 @@ const port = Deno.env.get("PORT") || 3000;
 const publicDir = fromFileUrl(new URL("./public", import.meta.url));
 app.use(express.static(publicDir));
 
-app.get("/", (req, res) => {
+app.get("/", (_req: Request, res: Response) => {
   res.send("Hello, World from Express!");
 });
 
-app.get("/students", async (req, res) => {
+app.get("/students", async (_req: Request, res: Response) => {
   const students = await prisma.student.findMany();
   res.json(students);
 });
 
-app.get("/students/:id", async (req, res) => {
-  const id = parseInt(req.params.id);
-  const student = await prisma.student.findUnique({
-    where: { id },
-  });
-  if (!student) {
-    return res.status(404).json({ error: "Student not found" });
-  }
-  res.json(student);
-});
-app.post("/students", async (req, res) => {
-  const { name, course } = req.body;
-  if (!name || !course) {
-    return res.status(400).json({ error: "Name and course are required!" });
-  }
-  const newStudent = await prisma.student.create({
-    data: { name, course },
-  });
-  res.status(201).json(newStudent);
-});
+app.get(
+  "/students/:id",
+  async (req: Request<{ id: string }>, res: Response) => {
+    const id = parseInt(req.params.id);
+    const student = await prisma.student.findUnique({
+      where: { id },
+    });
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+    res.json(student);
+  },
+);
 
-app.patch("/students/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  const { name, course } = req.body;
+app.post(
+  "/students",
+  async (
+    req: Request<Record<string, never>, unknown, { name?: string; course?: string }>,
+    res: Response,
+  ) => {
+    const { name, course } = req.body;
+    if (!name || !course) {
+      return res.status(400).json({ error: "Name and course are required!" });
+    }
+    const newStudent = await prisma.student.create({
+      data: { name, course },
+    });
+    res.status(201).json(newStudent);
+  },
+);
 
-  if (!name || !course) {
-    return res.status(400).json({ error: "Name and course are required!" });
-  }
-  const patchedStudent = prisma.student.update({
-    where: { id },
-    data: { name, course },
-  });
-  res.json(patchedStudent); // TODO fix for wrong id
-});
+app.patch(
+  "/students/:id",
+  (
+    req: Request<{ id: string }, unknown, { name?: string; course?: string }>,
+    res: Response,
+  ) => {
+    const id = parseInt(req.params.id);
+    const { name, course } = req.body;
 
-app.delete("/students/:id", async (req, res) => {
-  await prisma.student.delete({
-    where: { id: parseInt(req.params.id) },
-  });
-  return res.status(204).send(); // No Content
-});
+    if (!name || !course) {
+      return res.status(400).json({ error: "Name and course are required!" });
+    }
+    const patchedStudent = prisma.student.update({
+      where: { id },
+      data: { name, course },
+    });
+    res.json(patchedStudent); // TODO fix for wrong id
+  },
+);
+
+app.delete(
+  "/students/:id",
+  async (req: Request<{ id: string }>, res: Response) => {
+    await prisma.student.delete({
+      where: { id: parseInt(req.params.id) },
+    });
+    return res.status(204).send(); // No Content
+  },
+);
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
