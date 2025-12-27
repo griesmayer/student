@@ -78,6 +78,23 @@ app.delete(
   },
 );
 
+app.post("/chkpass", async (req: Request, res: Response) => {
+  const { user, pass } = req.body;
+  if (!user || !pass) {
+    return res.status(400).json({ error: "User and password are required!" });
+  }
+  if (user !== "admin" || pass !== "admin") {
+    return res.status(401).json({ error: "Invalid credentials!" });
+  }
+  const json = { status: "ok", message: "Credentials are valid." };
+  // const result = await fetch("https://grafg1.spengergasse.at/verify", {
+  //   method: 'POST',
+  //   body: JSON.stringify({ user, pass }),
+  //   headers: { 'Content-Type': 'application/json' },
+  // })
+  // const json = await result.json();
+  res.json(json);
+});
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });

@@ -23,3 +23,20 @@ Content-Type: application/json
 
 ###
 DELETE http://localhost:3000/students/2
+###
+POST http://localhost:3000/chkpass
+Content-Type: application/json
+
+{
+  "user": "grafg",
+  "pass": "georg"
+}
+
+###
+POST http://localhost:3000/chkpass
+Content-Type: application/json
+
+{
+  "user": "admin",
+  "pass": "admin"
+}

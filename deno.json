@@ -4,6 +4,7 @@
     "pv": "deno -A prisma validate",
     "pg": "deno -A prisma generate",
     "pmd": "deno -A prisma migrate dev",
+    "pmr": "deno -A prisma migrate reset",
     "pms": "deno -A prisma migrate status",
     "seed": "deno -A --env-file seed.ts"
   },
