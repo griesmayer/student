@@ -1,3 +1,4 @@
 .env
 **/generatedclient/
 **/*.db
+donotcommit.rest

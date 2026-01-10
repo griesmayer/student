@@ -15,7 +15,7 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 24 // 24 hours
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours
     },
   }),
 );
@@ -68,7 +68,11 @@ app.get(
 app.post(
   "/students",
   async (
-    req: Request<Record<string, never>, unknown, { name?: string; course?: string }>,
+    req: Request<
+      Record<string, never>,
+      unknown,
+      { name?: string; course?: string }
+    >,
     res: Response,
   ) => {
     if (!req.session.user) {
@@ -121,41 +125,57 @@ app.delete(
   },
 );
 
-app.post("/chkpass", (req: Request, res: Response) => {
-  const session = req.session;
+app.post("/chkpass", async (req: Request, res: Response) => {
   const { user, pass } = req.body;
   if (!user || !pass) {
     return res.status(400).json({ error: "User and password are required!" });
   }
-  if (user !== "admin" || pass !== "admin") {
-    return res.status(401).json({ error: "Invalid credentials!" });
+  if (user === "admin" && pass === "admin") {
+    req.session.user = user;
+    return res.json({ status: "ok", message: "Credentials are valid.", user });
   }
-  req.session.user = user;
-  const json = { status: "ok", message: "Credentials are valid.", user };
-  // const result = await fetch("https://grafg1.spengergasse.at/verify", {
-  //   method: 'POST',
-  //   body: JSON.stringify({ user, pass }),
-  //   headers: { 'Content-Type': 'application/json' },
-  // })
-  // const json = await result.json();
-  res.json(json);
+  const result = await fetch("https://grafg1.spengergasse.at/verify", {
+    method: "POST",
+    body: JSON.stringify({ user, passwd: pass }),
+    headers: { "Content-Type": "application/json" },
+  });
+  const json = await result.json();
+  if (result.ok) {
+    req.session.user = user; // ab jetzt ist der User eingeloggt. req.session.user ist dank der express-session Middleware
+    // gesetzt in allen nachfolgenden Requests
+    // const json = { status: "ok", message: "Credentials are valid.", user };
+    return res.json(json);
+  }
+  return res.status(401).json(json);
 });
 app.post(
   "/login",
   express.urlencoded({ extended: true }),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     const user = typeof req.body?.user === "string" ? req.body.user : undefined;
     const pass = typeof req.body?.pass === "string" ? req.body.pass : undefined;
 
     if (!user || !pass) {
       return res.status(400).json({ error: "User and password are required!" });
     }
-    if (user !== "admin" || pass !== "admin") {
-      return res.status(401).json({ error: "Invalid credentials!" });
+    if (user === "admin" && pass === "admin") {
+      req.session.user = user;
+      return res.redirect("/");
     }
-
-    req.session.user = user;
-    return res.redirect("/");
+    const result = await fetch("https://grafg1.spengergasse.at/verify", {
+      method: "POST",
+      body: JSON.stringify({ user, passwd: pass }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const json = await result.json();
+    if (result.ok) {
+      req.session.user = user; // ab jetzt ist der User eingeloggt. req.session.user ist dank der express-session Middleware
+      // gesetzt in allen nachfolgenden Requests
+      // const json = { status: "ok", message: "Credentials are valid.", user };
+      return res.redirect("/");
+      //       return res.json(json);
+    }
+    return res.status(401).json(json);
   },
 );
 

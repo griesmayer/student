@@ -23,13 +23,14 @@ Content-Type: application/json
 
 ###
 DELETE http://localhost:3000/students/2
-###
-POST http://localhost:3000/chkpass
+
+### setzt den cookie usw...
+POST http://localhost:3000/login
 Content-Type: application/json
 
 {
-  "user": "grafg",
-  "pass": "georg"
+  "user": "versuchsanstalt",
+  "pass": "wiederfalsch"
 }
 
 ###
@@ -40,3 +41,13 @@ Content-Type: application/json
   "user": "admin",
   "pass": "admin"
 }
+
+### Das funktioniert, wenn das Passwort richtig ist:
+POST https://grafg1.spengergasse.at/verify
+Content-Type: application/json
+
+{
+  "user": "versuchsanstalt",
+  "passwd": "falschesPasswort"
+}
+
