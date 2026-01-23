@@ -1,3 +1,16 @@
+###
+POST http://localhost:3000/login
+Content-Type: application/x-www-form-urlencoded
+
+username=test&password=dsklfahalks
+
+###
+POST http://localhost:3000/login
+Content-Type: application/x-www-form-urlencoded
+
+username=test&password=test
+
+###
 GET http://localhost:3000/students
 
 ###
