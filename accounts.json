@@ -1,0 +1,26 @@
+[
+  {
+    "username": "maxi",
+    "password": "ixam"
+  },
+  {
+    "username": "user1",
+    "password": "pass1"
+  },
+  {
+    "username": "test",
+    "password": "test"
+  },
+  {
+    "username": "admin",
+    "password": "admin"
+  },
+  {
+    "username": "demo",
+    "password": "demo"
+  },
+  {
+    "username": "guest",
+    "password": "guest"
+  }
+]

@@ -1,4 +1,4 @@
-import { PrismaClient } from "./prisma/generatedclient/client.ts"
+import { PrismaClient } from "./generated/client.ts"
 const prisma = new PrismaClient()
 
 const students = [

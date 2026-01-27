@@ -9,15 +9,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "your-secret-key-change-in-production",
+    secret: process.env.SESSION_SECRET ||
+      "your-secret-key-change-in-production",
     resave: false,
     saveUninitialized: false,
+    name: "schurlix",
     cookie: {
+      maxAge: 5 * 60 * 1000, // 5 minutes
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
-      maxAge: 600
     },
-  })
+  }),
 );
 const port = process.env.PORT || 3000;
 // **NEW** use the public/index.htlm file
@@ -109,6 +111,12 @@ app.post("/login", (req: Request, res: Response) => {
   res.status(401).json({ error: "Invalid credentials" });
 });
 
+app.get("/loginstatus", (req: Request, res: Response) => {
+  if (req.session.user) {
+    return res.json({ loggedIn: true, user: req.session.user });
+  }
+  res.json({ loggedIn: false });
+});
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
