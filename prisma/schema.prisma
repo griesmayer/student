@@ -4,9 +4,9 @@ datasource db {
 }
 
 generator client {
-    provider = "prisma-client"
-    output   = "generatedclient"
-    runtime  = "deno"
+  provider = "prisma-client"
+  runtime = "deno"
+  output = "./generated"
 }
 
 model Student {

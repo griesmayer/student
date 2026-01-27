@@ -1,197 +1,114 @@
-import express, { type Request, type Response } from "express";
-import { fromFileUrl } from "@std/path";
-// import cookieParser from "cookie-parser";
+import express, { Request, Response } from "express";
+import path from "node:path";
+import process from "node:process";
 import session from "express-session";
-import { PrismaClient } from "./prisma/generatedclient/client.ts";
-const prisma = new PrismaClient();
+import { PrismaClient } from "./generated/client.ts";
 
 const app = express();
-// app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
-    secret: Deno.env.get("SESSION_SECRET") ?? "dev-secret-change-me",
+    secret: process.env.SESSION_SECRET || "your-secret-key-change-in-production",
     resave: false,
     saveUninitialized: false,
     cookie: {
+      secure: process.env.NODE_ENV === "production",
       httpOnly: true,
-      sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+      maxAge: 600
     },
-  }),
+  })
 );
-app.use(express.json());
+const port = process.env.PORT || 3000;
+// **NEW** use the public/index.htlm file
+app.use(express.static(path.join(import.meta.dirname || __dirname, "public")));
 
-type ListenError = Error & { code?: string };
+const prisma = new PrismaClient();
 
-const portRaw = Deno.env.get("PORT") ?? "3000";
-const port = Number(portRaw);
-if (!Number.isInteger(port) || port <= 0 || port > 65535) {
-  console.error(
-    `Invalid PORT value '${portRaw}'. Expected an integer between 1 and 65535.`,
-  );
-  Deno.exit(1);
-}
+const students = await prisma.student.findMany();
 
-const publicDir = fromFileUrl(new URL("./public", import.meta.url));
-
-app.get("", (req: Request, res: Response) => {
-  if (!req.session.user) {
-    return res.redirect("/login.html");
-  }
-  res.sendFile("index.html", { root: publicDir });
-});
-app.get("/students", async (req: Request, res: Response) => {
-  if (!req.session.user) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-  const students = await prisma.student.findMany();
+app.get("/students", (_req: Request, res: Response) => {
   res.json(students);
 });
 
-app.get(
-  "/students/:id",
-  async (req: Request<{ id: string }>, res: Response) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-    const id = parseInt(req.params.id);
-    const student = await prisma.student.findUnique({
-      where: { id },
-    });
-    if (!student) {
-      return res.status(404).json({ error: "Student not found" });
-    }
-    res.json(student);
-  },
-);
+app.get("/students/:id", (req: Request, res: Response) => {
+  const id = parseInt(String(req.params.id));
+  const student = students.find((s) => s.id === id);
 
-app.post(
-  "/students",
-  async (
-    req: Request<
-      Record<string, never>,
-      unknown,
-      { name?: string; course?: string }
-    >,
-    res: Response,
-  ) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-    const { name, course } = req.body;
-    if (!name || !course) {
-      return res.status(400).json({ error: "Name and course are required!" });
-    }
-    const newStudent = await prisma.student.create({
-      data: { name, course },
-    });
-    res.status(201).json(newStudent);
-  },
-);
-
-app.patch(
-  "/students/:id",
-  async (
-    req: Request<{ id: string }, unknown, { name?: string; course?: string }>,
-    res: Response,
-  ) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-    const id = parseInt(req.params.id);
-    const { name, course } = req.body;
-
-    if (!name || !course) {
-      return res.status(400).json({ error: "Name and course are required!" });
-    }
-    const patchedStudent = await prisma.student.update({
-      where: { id },
-      data: { name, course },
-    });
-    res.json(patchedStudent); // TODO fix for wrong id
-  },
-);
-
-app.delete(
-  "/students/:id",
-  async (req: Request<{ id: string }>, res: Response) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-    await prisma.student.delete({
-      where: { id: parseInt(req.params.id) },
-    });
-    return res.status(204).send(); // No Content
-  },
-);
-
-app.post("/chkpass", async (req: Request, res: Response) => {
-  const { user, pass } = req.body;
-  if (!user || !pass) {
-    return res.status(400).json({ error: "User and password are required!" });
+  if (!student) {
+    return res.status(404).json({ error: "Student not found" });
   }
-  if (user === "admin" && pass === "admin") {
-    req.session.user = user;
-    return res.json({ status: "ok", message: "Credentials are valid.", user });
-  }
-  const result = await fetch("https://grafg1.spengergasse.at/verify", {
-    method: "POST",
-    body: JSON.stringify({ user, passwd: pass }),
-    headers: { "Content-Type": "application/json" },
-  });
-  const json = await result.json();
-  if (result.ok) {
-    req.session.user = user; // ab jetzt ist der User eingeloggt. req.session.user ist dank der express-session Middleware
-    // gesetzt in allen nachfolgenden Requests
-    // const json = { status: "ok", message: "Credentials are valid.", user };
-    return res.json(json);
-  }
-  return res.status(401).json(json);
+
+  res.json(student);
 });
-app.post(
-  "/login",
-  express.urlencoded({ extended: true }),
-  async (req: Request, res: Response) => {
-    const user = typeof req.body?.user === "string" ? req.body.user : undefined;
-    const pass = typeof req.body?.pass === "string" ? req.body.pass : undefined;
 
-    if (!user || !pass) {
-      return res.status(400).json({ error: "User and password are required!" });
-    }
-    if (user === "admin" && pass === "admin") {
-      req.session.user = user;
-      return res.redirect("/");
-    }
-    const result = await fetch("https://grafg1.spengergasse.at/verify", {
-      method: "POST",
-      body: JSON.stringify({ user, passwd: pass }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const json = await result.json();
-    if (result.ok) {
-      req.session.user = user; // ab jetzt ist der User eingeloggt. req.session.user ist dank der express-session Middleware
-      // gesetzt in allen nachfolgenden Requests
-      // const json = { status: "ok", message: "Credentials are valid.", user };
-      return res.redirect("/");
-      //       return res.json(json);
-    }
-    return res.status(401).json(json);
-  },
-);
+app.post("/students", (req: Request, res: Response) => {
+  const { name, course } = req.body;
 
-app.use(express.static(publicDir));
+  if (!name || !course) {
+    return res.status(400).json({ error: "Name and course are required!" });
+  }
 
-const server = app.listen(port, () => {
+  const newId = students.length ? students[students.length - 1].id + 1 : 1;
+  const newStudent = { id: newId, name, course };
+  students.push(newStudent);
+  res.status(201).json(newStudent);
+});
+
+app.put("/students/:id", (req: Request, res: Response) => {
+  const id = parseInt(String(req.params.id));
+  const { name, course } = req.body;
+
+  if (!name || !course) {
+    return res.status(400).json({ error: "Name and course are required!" });
+  }
+
+  const pos = students.findIndex((s) => s.id === id);
+  if (pos === -1) {
+    return res.status(404).json({ error: "Student not found" });
+  }
+  students[pos] = { id, name, course };
+  res.json(students[pos]);
+});
+
+app.patch("/students/:id", (req: Request, res: Response) => {
+  const id = parseInt(String(req.params.id));
+  const { name, course } = req.body;
+
+  const student = students.find((s) => s.id === id);
+  if (!student) {
+    return res.status(404).json({ error: "Student not found" });
+  }
+
+  if (name !== undefined) student.name = name;
+  if (course !== undefined) student.course = course;
+
+  res.json(student);
+});
+
+app.delete("/students/:id", (req: Request, res: Response) => {
+  const id = parseInt(String(req.params.id));
+  const pos = students.findIndex((s) => s.id === id);
+
+  if (pos === -1) {
+    return res.status(404).json({ error: "Student not found" });
+  }
+
+  students.splice(pos, 1);
+  return res.status(204).send(); // No Content
+});
+
+app.post("/login", (req: Request, res: Response) => {
+  const { username, password } = req.body;
+
+  if (username === "test" && password === "test") {
+    req.session.user = { username };
+    return res.json({ message: "Login successful" });
+  }
+
+  res.status(401).json({ error: "Invalid credentials" });
+});
+
+app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
-});
-
-server.on("error", (err: ListenError) => {
-  if (err?.code === "EADDRINUSE") {
-    console.error(`Port ${port} is already in use.`);
-  } else if (err?.code === "EACCES") {
-    console.error(`Permission denied binding to port ${port}.`);
-  } else {
-    console.error("Failed to start server:", err);
-  }
-  Deno.exit(1);
 });
