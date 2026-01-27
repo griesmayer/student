@@ -4,6 +4,7 @@ import process from "node:process";
 import session from "express-session";
 import { PrismaClient } from "./generated/client.ts";
 import accounts from "./accounts.json" with { type: "json" };
+import { authMiddleware } from "./auth.ts";
 
 const app = express();
 app.use(express.json());
@@ -89,7 +90,7 @@ app.patch("/students/:id", (req: Request, res: Response) => {
   res.json(student);
 });
 
-app.delete("/students/:id", (req: Request, res: Response) => {
+app.delete("/students/:id", authMiddleware, (req: Request, res: Response) => {
   const id = parseInt(String(req.params.id));
   const pos = students.findIndex((s) => s.id === id);
 
@@ -105,7 +106,7 @@ app.post("/login", (req: Request, res: Response) => {
   const { username, password } = req.body;
 
   const account = accounts.find(
-    (acc) => acc.username === username && acc.password === password
+    (acc) => acc.username === username && acc.password === password,
   );
 
   if (account) {
