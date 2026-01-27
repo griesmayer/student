@@ -3,6 +3,7 @@ import path from "node:path";
 import process from "node:process";
 import session from "express-session";
 import { PrismaClient } from "./generated/client.ts";
+import accounts from "./accounts.json" with { type: "json" };
 
 const app = express();
 app.use(express.json());
@@ -103,8 +104,12 @@ app.delete("/students/:id", (req: Request, res: Response) => {
 app.post("/login", (req: Request, res: Response) => {
   const { username, password } = req.body;
 
-  if (username === "test" && password === "test") {
-    req.session.user = { username };
+  const account = accounts.find(
+    (acc) => acc.username === username && acc.password === password
+  );
+
+  if (account) {
+    req.session.user = { username: account.username };
     return res.json({ message: "Login successful" });
   }
 
