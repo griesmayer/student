@@ -75,7 +75,7 @@ app.put("/students/:id", (req: Request, res: Response) => {
     res.json(students[pos]);
 });
 
-app.patch("/students/:id", (req: Request, res: Response) => {
+app.patch("/students/:id", authMiddleware, (req: Request, res: Response) => {
     const id = parseInt(String(req.params.id));
     const { name, course } = req.body;
 

@@ -46,12 +46,17 @@ async function fetchStudents() {
                             "Name und Kurs erforderlich.";
                         return;
                     }
-                    await updateStudent(s.id, {
-                        name: nameInput.value.trim(),
-                        course: courseInput.value.trim(),
-                    });
-                    editingId = null;
-                    await fetchStudents();
+                    try {
+                        await updateStudent(s.id, {
+                            name: nameInput.value.trim(),
+                            course: courseInput.value.trim(),
+                        });
+                        editingId = null;
+                        await fetchStudents();
+                        statusEl.textContent = "Änderungen gespeichert.";
+                    } catch (e) {
+                        statusEl.textContent = e.message;
+                    }
                 };
 
                 const cancelBtn = document.createElement("button");
@@ -143,27 +148,22 @@ async function deleteStudent(id) {
     const res = await fetch(`/students/${id}`, { method: "DELETE" });
     if (res.status === 204) {
         statusEl.textContent = `Student ${id} removed.`;
+    } else if (res.status === 401) {
+        throw new Error("Nicht eingeloggt.");
     } else {
         throw new Error(res.status || `HTTP ${res.status}`);
     }
 }
 
 async function updateStudent(id, data) {
-    const statusEl = document.getElementById("status");
-    try {
-        const res = await fetch(`/students/${id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-        });
-        if (!res.ok) {
-            const msg = await res.json().catch(() => ({}));
-            throw new Error(msg.error || `HTTP ${res.status}`);
-        }
-        statusEl.textContent = `Student ${id} aktualisiert.`;
-    } catch (err) {
-        console.error(err);
-        statusEl.textContent = `Fehler beim Aktualisieren: ${err.message}`;
+    const res = await fetch(`/students/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const msg = await res.json();
+        throw new Error(msg.error || `HTTP ${res.status}`);
     }
 }
 
