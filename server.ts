@@ -90,7 +90,7 @@ app.patch("/students/:id", (req: Request, res: Response) => {
     res.json(student);
 });
 
-app.delete("/students/:id", (req: Request, res: Response) => {
+app.delete("/students/:id", authMiddleware, (req: Request, res: Response) => {
     const id = parseInt(String(req.params.id));
     const pos = students.findIndex((s) => s.id === id);
 
